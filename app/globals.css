@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Ibarra+Real+Nova:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Editorial Palette - Precise matching of the provided image */
+  --color-ordr: #0f172a;
+  --color-ordr-paper: #fafafa;
+  --color-ordr-accent: #e43d5d;
+  --color-ordr-text: #1a1a1a;
+  --color-ordr-red: #e43d5d;
+
+  /* Typography */
+  --font-ordr-serif: "Ibarra Real Nova", serif;
+  --font-sans: "Inter", sans-serif;
+
+  /* Theme mappings */
+  --color-primary: var(--color-ordr-accent);
+  --color-background: var(--color-ordr-paper);
+  --color-foreground: var(--color-ordr-text);
+
+  /* Shadows - Premium, multi-layered */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 0 rgba(0,0,0,0.02);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
+  --shadow-premium: 0 20px 25px -5px rgba(0,0,0,0.03), 0 10px 10px -5px rgba(0,0,0,0.02);
+}
+
+@layer base {
+  body {
+    background-color: #fafafa;
+    color: #1a1a1a;
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-serif {
+    font-family: var(--font-ordr-serif);
+  }
+
+  h1 {
+    font-weight: 400;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .text-ordr-serif {
+    font-family: var(--font-ordr-serif);
+  }
+
+  .card-premium {
+    background: white;
+    border: 1px solid rgba(0,0,0,0.04);
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-premium:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: rgba(228, 61, 93, 0.15);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .accent-gradient {
+    background: linear-gradient(135deg, var(--color-ordr-accent) 0%, #ff5e7e 100%);
+  }
+}
