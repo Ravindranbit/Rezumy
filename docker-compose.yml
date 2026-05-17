@@ -1,0 +1,16 @@
+services:
+  rezumy-db:
+    image: postgres:15
+    container_name: rezumy-postgres
+    environment:
+      POSTGRES_USER: rezumy
+      POSTGRES_PASSWORD: rezumy_secret
+      POSTGRES_DB: rezumy
+    ports:
+      - "5434:5432"
+    volumes:
+      - rezumy-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  rezumy-pgdata:
