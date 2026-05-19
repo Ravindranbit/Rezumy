@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rezumy 📄
 
-## Getting Started
+Rezumy is a modern, high-fidelity AI-powered resume builder and portfolio editorial system designed to streamline your professional presence.
 
-First, run the development server:
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+
+Ensure you have **Node.js** (v18 or higher) and **Docker** installed on your machine.
+
+### 2. Environment Configuration
+
+Create a `.env` file in the root directory. You can copy the template provided in `.env.example`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Here is a guide on how to acquire and configure each required key:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Description | How to Obtain / Configure |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string used by Prisma. | Can be run locally using the provided Docker setup (`postgresql://rezumy:rezumy_secret@localhost:5434/rezumy`). Alternatively, use a hosted provider like [Neon](https://neon.tech/) or [Supabase](https://supabase.com/). |
+| `JWT_SECRET` | Secret key used for signing and verifying JWT tokens. | Generate a secure random string. In your terminal, you can run:<br>`openssl rand -base64 32` |
+| `NEXT_PUBLIC_APP_URL` | The public base URL of the Next.js app. | For local development, use `http://localhost:3000`. |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client identifier. | 1. Go to [GitHub Developer Settings](https://github.com/settings/developers).<br>2. Click **New OAuth App**.<br>3. Set **Homepage URL** to `http://localhost:3000`.<br>4. Set **Authorization callback URL** to `http://localhost:3000/api/github/callback`.<br>5. Copy the generated **Client ID**. |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret. | Generate and copy the **Client Secret** from the same GitHub OAuth App created above. |
+| `ENCRYPTION_KEY` | 32-character hex key (16 bytes) for encrypting GitHub access tokens using AES-128. | Generate a 32-character hexadecimal key by running:<br>`openssl rand -hex 16` |
+| `GROQ_API_KEY` | API Key for LLM-powered resume parsing and job recommendations. | 1. Sign up / Log in to the [Groq Console](https://console.groq.com/).<br>2. Navigate to **API Keys** and generate a new key. |
+| `SERPER_API_KEY` | API Key for web scraping and real-time job searches via Google Search API. | 1. Sign up / Log in to [Serper](https://serper.dev/).<br>2. Copy your API Key from the dashboard. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Spin up the Database
 
-## Learn More
+Start the PostgreSQL database container:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+docker compose up -d
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. Database Setup (Prisma)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run database migrations to set up schemas:
 
-## Deploy on Vercel
+```bash
+npx prisma db push
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Running the Application
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Install dependencies and start the local development server:
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+## 🛠️ Development & Architecture
+
+- **Framework**: [Next.js (App Router)](https://nextjs.org/)
+- **Database ORM**: [Prisma](https://www.prisma.io/)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/)
+- **Authentication**: JWT & GitHub OAuth
+- **APIs**: Groq API (AI parsing/processing), Serper API (Job queries)
