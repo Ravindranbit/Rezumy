@@ -19,9 +19,10 @@ model User {
   githubUsername     String?
   githubAccessToken  String?  // Encrypted with AES — see lib/crypto.ts
 
-  profile     Profile?
-  resumes     Resume[]
-  githubRepos GitHubRepo[]
+  profile         Profile?
+  resumes         Resume[]
+  githubRepos     GitHubRepo[]
+  jobDescriptions JobDescription[]
 }
 
 model Profile {
@@ -103,12 +104,29 @@ model GitHubRepo {
   stars       Int     @default(0)
   repoUpdatedAt String @default("")
   isSelected  Boolean @default(false)
-  // Deep analysis results
+  // Deep analysis results (v1 — kept for backward compatibility)
   analyzedSkills Json   @default("[]") // Enriched skills from file content analysis
   projectType    String @default("")   // e.g. "Full-Stack Web App", "ML Project", "CLI Tool"
   techStack      String @default("")   // Comma-separated canonical tech stack
+  // v2: Structured project profile
+  projectProfile  Json    @default("{}") // RepositoryProfile JSON
+  qualityScore    Float   @default(0)    // 0–100 weighted quality score
+  qualityGrade    String  @default("")   // A, B, C, D, F
+  readmeSections  Json    @default("{}") // Parsed README sections
+  verifiedTechs   Json    @default("[]") // VerifiedTechnology[] — only techs confirmed by source code
+  activityMetrics Json    @default("{}") // ActivityMetrics JSON
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, repoId])
+}
+
+model JobDescription {
+  id        String   @id @default(cuid())
+  userId    String
+  rawText   String   // Raw JD text pasted by user
+  parsed    Json     @default("{}") // ParsedJobDescription JSON
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

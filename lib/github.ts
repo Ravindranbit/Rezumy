@@ -259,18 +259,62 @@ function buildTechStack(language: string, topics: string[]): string {
 
 /**
  * Transform a GitHubRepo database record into a resume-ready project.
+ * If v2 analysis data is available, returns an EnrichedProject with
+ * quality scores, verified skills, and structured metadata.
  */
 export function transformRepoToProject(repo: {
+  id?: string;
   name: string;
   description: string;
   language: string;
   topics: string[] | unknown;
   url: string;
   stars: number;
+  // v2 fields (optional — may not be analyzed yet)
+  projectProfile?: Record<string, unknown> | null;
+  qualityScore?: number;
+  qualityGrade?: string;
+  verifiedTechs?: Array<{ technology: string; confidence: string; sources: string[] }> | null;
 }) {
   const topics = Array.isArray(repo.topics) ? repo.topics as string[] : [];
   const techStack = buildTechStack(repo.language, topics);
 
+  // If v2 analysis data is available, return EnrichedProject
+  const profile = repo.projectProfile as Record<string, unknown> | null;
+  if (profile && repo.qualityScore !== undefined && repo.qualityScore > 0) {
+    const verifiedSkills = Array.isArray(repo.verifiedTechs)
+      ? repo.verifiedTechs.map((v) => v.technology)
+      : [];
+
+    return {
+      project_id: repo.id || "",
+      title: humanizeRepoName(repo.name),
+      description: generateSmartDescription(
+        repo.name,
+        repo.description,
+        repo.language,
+        topics,
+        verifiedSkills.join(", ") || techStack
+      ),
+      category: (profile.category as string) || "Software Project",
+      skills: verifiedSkills,
+      tech_stack: verifiedSkills.length > 0 ? verifiedSkills : techStack.split(", ").filter(Boolean),
+      resume_bullets: [] as string[], // Populated in Phase 2
+      quality_score: repo.qualityScore,
+      quality_grade: (repo.qualityGrade || "F") as "A" | "B" | "C" | "D" | "F",
+      relevance_score: undefined as number | undefined, // Set after JD matching (Phase 2)
+      source: "github" as const,
+      url: repo.url,
+      architecture: (profile.architecture as string) || "Unknown",
+      is_production_ready:
+        Boolean(profile.deployment && (profile.deployment as string[]).length > 0) &&
+        Boolean(profile.testing),
+      // Legacy compat
+      techStack: verifiedSkills.join(", ") || techStack,
+    };
+  }
+
+  // Fallback: no v2 analysis — return legacy format
   return {
     title: humanizeRepoName(repo.name),
     description: generateSmartDescription(

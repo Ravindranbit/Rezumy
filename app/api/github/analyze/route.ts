@@ -3,12 +3,12 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/auth";
 import { decryptToken } from "@/lib/github";
-import { analyzeRepository } from "@/lib/github-analyzer";
+import { analyzeRepositoryV2 } from "@/lib/engine/analyzer-v2";
 
 // Force Node.js runtime — required for Buffer (base64 decoding) in github-analyzer
 export const runtime = "nodejs";
 
-// POST /api/github/analyze — Deep-analyze a single repo
+// POST /api/github/analyze — Deep-analyze a single repo (v2 engine)
 export async function POST(request: NextRequest) {
   try {
     const userId = await getCurrentUserId();
@@ -52,21 +52,30 @@ export async function POST(request: NextRequest) {
 
     const token = decryptToken(user.githubAccessToken);
 
-    // Run deep analysis
-    const analysis = await analyzeRepository(token, repo.fullName, {
+    // Run v2 deep analysis
+    const analysis = await analyzeRepositoryV2(token, repo.fullName, {
       language: repo.language,
       topics: Array.isArray(repo.topics) ? (repo.topics as string[]) : [],
       description: repo.description,
       name: repo.name,
+      stars: repo.stars,
     });
 
-    // Persist analysis results
+    // Persist analysis results (v1 fields for backward compat + v2 structured data)
     const updated = await prisma.gitHubRepo.update({
       where: { id: repoId },
       data: {
+        // v1 backward-compatible fields
         analyzedSkills: analysis.skills,
         projectType: analysis.projectType,
         techStack: analysis.techStack,
+        // v2 structured fields
+        projectProfile: analysis.profile as any,
+        qualityScore: analysis.quality.score,
+        qualityGrade: analysis.quality.grade,
+        readmeSections: analysis.readmeSections as any,
+        verifiedTechs: analysis.verifiedTechs as any,
+        activityMetrics: analysis.activityMetrics as any,
         // Only override description if the analysis generated a better one
         ...(analysis.enhancedDescription && !repo.description
           ? { description: analysis.enhancedDescription }
@@ -82,6 +91,18 @@ export async function POST(request: NextRequest) {
         projectType: analysis.projectType,
         techStack: analysis.techStack,
         description: updated.description,
+        // v2 data
+        profile: analysis.profile,
+        quality: analysis.quality,
+        verifiedTechs: analysis.verifiedTechs,
+        readmeSections: {
+          features: analysis.readmeSections.features,
+          architecture: analysis.readmeSections.architecture,
+          apis: analysis.readmeSections.apis,
+          deployment: analysis.readmeSections.deployment,
+          tech_stack: analysis.readmeSections.tech_stack,
+        },
+        activityMetrics: analysis.activityMetrics,
       },
     });
   } catch (error) {
@@ -142,26 +163,35 @@ export async function GET(request: NextRequest) {
     let analyzed = 0;
     const errors: string[] = [];
 
-    // Process in batches of 3 to respect GitHub rate limits
-    for (let i = 0; i < repos.length; i += 3) {
-      const batch = repos.slice(i, i + 3);
+    // Process in batches of 2 (v2 makes more API calls per repo)
+    for (let i = 0; i < repos.length; i += 2) {
+      const batch = repos.slice(i, i + 2);
 
       await Promise.all(
         batch.map(async (repo) => {
           try {
-            const analysis = await analyzeRepository(token, repo.fullName, {
+            const analysis = await analyzeRepositoryV2(token, repo.fullName, {
               language: repo.language,
               topics: Array.isArray(repo.topics) ? (repo.topics as string[]) : [],
               description: repo.description,
               name: repo.name,
+              stars: repo.stars,
             });
 
             await prisma.gitHubRepo.update({
               where: { id: repo.id },
               data: {
+                // v1 fields
                 analyzedSkills: analysis.skills,
                 projectType: analysis.projectType,
                 techStack: analysis.techStack,
+                // v2 fields
+                projectProfile: analysis.profile as any,
+                qualityScore: analysis.quality.score,
+                qualityGrade: analysis.quality.grade,
+                readmeSections: analysis.readmeSections as any,
+                verifiedTechs: analysis.verifiedTechs as any,
+                activityMetrics: analysis.activityMetrics as any,
               },
             });
             analyzed++;
@@ -173,9 +203,9 @@ export async function GET(request: NextRequest) {
         })
       );
 
-      // Rate-limit delay between batches
-      if (i + 3 < repos.length) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+      // Rate-limit delay between batches (increased for v2's extra API calls)
+      if (i + 2 < repos.length) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 

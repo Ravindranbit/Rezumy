@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star, Clock, ExternalLink, Zap, Loader2 } from "lucide-react";
+import { Star, Clock, ExternalLink, Zap, Loader2, Shield } from "lucide-react";
 import GitHubIcon from "@/components/ui/GitHubIcon";
 import type { GitHubRepoData } from "@/types";
 
@@ -65,6 +65,18 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
   };
 
   const isAnalyzed = analyzedSkills.length > 0 || !!repo.projectType;
+  const hasQuality = (repo.qualityScore ?? 0) > 0;
+
+  // Quality grade color mapping
+  const gradeColors: Record<string, string> = {
+    A: "bg-emerald-500 text-white",
+    B: "bg-blue-500 text-white",
+    C: "bg-amber-500 text-white",
+    D: "bg-orange-500 text-white",
+    F: "bg-red-500 text-white",
+  };
+
+  const gradeColor = repo.qualityGrade ? gradeColors[repo.qualityGrade] || "bg-zinc-400 text-white" : "";
 
   return (
     <div
@@ -82,8 +94,24 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
             {repo.projectType}
           </span>
         )}
+
+        {/* Quality Score Badge */}
+        {hasQuality && (
+          <span
+            className="flex items-center gap-1 ml-auto"
+            title={`Quality: ${repo.qualityScore}/100 (${repo.qualityGrade})`}
+          >
+            <span className={`text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded ${gradeColor}`}>
+              {repo.qualityGrade}
+            </span>
+            <span className="text-[10px] font-semibold text-zinc-500">
+              {repo.qualityScore}
+            </span>
+          </span>
+        )}
+
         {repo.isSelected && (
-          <span className="text-[9px] font-bold uppercase tracking-widest text-[#e43d5d] bg-[#e43d5d]/10 px-2 py-0.5 rounded-full ml-auto">
+          <span className={`text-[9px] font-bold uppercase tracking-widest text-[#e43d5d] bg-[#e43d5d]/10 px-2 py-0.5 rounded-full ${!hasQuality ? 'ml-auto' : ''}`}>
             Imported
           </span>
         )}
@@ -152,6 +180,28 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
           )}
         </div>
       )}
+
+      {/* Architecture + Production badge (v2 analysis) */}
+      {hasQuality && repo.projectProfile && (() => {
+        const prof = repo.projectProfile as Record<string, unknown>;
+        const arch = String(prof.architecture || "");
+        const hasTesting = Boolean(prof.testing);
+        return (
+          <div className="flex items-center gap-1.5 mb-3">
+            {arch && arch !== "Unknown" && (
+              <span className="text-[9px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                {arch}
+              </span>
+            )}
+            {hasTesting && (
+              <span className="flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                <Shield size={8} />
+                Tested
+              </span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Meta row */}
       <div className="flex items-center gap-3 text-[11px] font-medium text-zinc-400">

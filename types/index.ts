@@ -104,10 +104,44 @@ export interface GitHubRepoData {
   stars: number;
   repoUpdatedAt: string;
   isSelected: boolean;
-  // Deep analysis results
+  // Deep analysis results (v1)
   analyzedSkills: string[];
   projectType: string;
   techStack: string;
+  // v2 analysis results
+  qualityScore?: number;
+  qualityGrade?: string;
+  verifiedTechs?: Array<{
+    technology: string;
+    confidence: "high" | "medium" | "low";
+    sources: string[];
+  }>;
+  activityMetrics?: {
+    commits_last_90_days: number;
+    total_commits: number;
+    contributors: number;
+    last_update: string;
+    releases: number;
+    active: boolean;
+    open_issues: number;
+    forks: number;
+  };
+  projectProfile?: {
+    project_name: string;
+    category: string;
+    languages: string[];
+    frameworks: string[];
+    databases: string[];
+    cloud: string[];
+    deployment: string[];
+    testing: boolean;
+    test_frameworks: string[];
+    api_present: boolean;
+    authentication: boolean;
+    machine_learning: boolean;
+    architecture: string;
+    complexity_score: number;
+  };
 }
 
 export interface JobListing {
@@ -120,3 +154,16 @@ export interface JobListing {
   matchScore: number;
   reason: string;
 }
+
+// Re-export v2 engine types for use in components
+export type {
+  RepositoryProfile,
+  VerifiedTechnology,
+  ReadmeSections,
+  ActivityMetrics,
+  QualityResult,
+  QualityBreakdown,
+  QualityGrade,
+  EnrichedProject,
+  AnalysisV2Result,
+} from "@/lib/types/repository-profile";
