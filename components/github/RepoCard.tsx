@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Star, Clock, ExternalLink, Zap, Loader2, Shield } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Star, Clock, ExternalLink, Shield } from "lucide-react";
 import GitHubIcon from "@/components/ui/GitHubIcon";
 import type { GitHubRepoData } from "@/types";
 
@@ -9,12 +9,21 @@ interface RepoCardProps {
   repo: GitHubRepoData;
   onToggle: (id: string, isSelected: boolean) => void;
   onUnlink?: (repoName: string) => Promise<{ error?: string }>;
-  onAnalyze?: (id: string) => Promise<{ data?: unknown; error?: string | null }>;
 }
 
-export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCardProps) {
+export default function RepoCard({ repo, onToggle, onUnlink }: RepoCardProps) {
   const [unlinking, setUnlinking] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
+  const descRef = useRef<HTMLParagraphElement>(null);
+
+  // Detect whether the description is actually truncated
+  useEffect(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsClamped(el.scrollHeight > el.clientHeight);
+    }
+  }, [repo.description]);
   const topics = Array.isArray(repo.topics) ? repo.topics : [];
   const analyzedSkills = Array.isArray(repo.analyzedSkills) ? repo.analyzedSkills : [];
   const updatedDate = repo.repoUpdatedAt
@@ -56,15 +65,7 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
     }
   };
 
-  const handleAnalyze = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!onAnalyze || analyzing) return;
-    setAnalyzing(true);
-    await onAnalyze(repo.id);
-    setAnalyzing(false);
-  };
 
-  const isAnalyzed = analyzedSkills.length > 0 || !!repo.projectType;
   const hasQuality = (repo.qualityScore ?? 0) > 0;
 
   // Quality grade color mapping
@@ -153,9 +154,28 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
 
       {/* Description */}
       {repo.description ? (
-        <p className="text-[13px] text-zinc-500 line-clamp-2 mb-3 leading-relaxed font-normal">
-          {repo.description.split("\n")[0]}
-        </p>
+        <div className="mb-3">
+          <p
+            ref={descRef}
+            className={`text-[13px] text-zinc-500 leading-relaxed font-normal ${
+              descExpanded ? "" : "line-clamp-2"
+            }`}
+            title={repo.description}
+          >
+            {repo.description}
+          </p>
+          {(isClamped || descExpanded) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDescExpanded(!descExpanded);
+              }}
+              className="text-[11px] font-medium text-[#e43d5d] hover:text-[#c93552] mt-1 transition-colors"
+            >
+              {descExpanded ? "Show less" : "Show more"}
+            </button>
+          )}
+        </div>
       ) : (
         <p className="text-[13px] italic text-zinc-400 mb-3 font-light">
           No description provided
@@ -229,25 +249,6 @@ export default function RepoCard({ repo, onToggle, onUnlink, onAnalyze }: RepoCa
         )}
 
         <div className="ml-auto flex items-center gap-1.5">
-          {/* Analyze button */}
-          {onAnalyze && (
-            <button
-              onClick={handleAnalyze}
-              disabled={analyzing}
-              title={isAnalyzed ? "Re-analyze repository" : "Analyze tech stack"}
-              className={`p-1 rounded transition-all duration-200 ${
-                isAnalyzed
-                  ? "text-zinc-200 hover:text-[#e43d5d]"
-                  : "text-[#e43d5d] hover:bg-[#e43d5d]/10 animate-pulse"
-              }`}
-            >
-              {analyzing ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Zap size={13} />
-              )}
-            </button>
-          )}
 
           <a
             href={repo.url}

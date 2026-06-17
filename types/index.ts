@@ -166,4 +166,8 @@ export type {
   QualityGrade,
   EnrichedProject,
   AnalysisV2Result,
+  // Phase 2 — JD Intelligence
+  SeniorityLevel,
+  ParsedJobDescription,
+  JdAnalysisResult,
 } from "@/lib/types/repository-profile";

@@ -132,3 +132,40 @@ export interface AnalysisV2Result {
   techStack: string;
   enhancedDescription: string;
 }
+
+// ─── Job Description Intelligence (Phase 2) ─────────────────
+
+export type SeniorityLevel =
+  | "intern"
+  | "junior"
+  | "mid"
+  | "senior"
+  | "lead"
+  | "staff";
+
+/**
+ * Structured output from parsing a job description.
+ * Purely role-based — no company name extraction.
+ * Used for relevance scoring, ATS keyword targeting, and bullet generation.
+ */
+export interface ParsedJobDescription {
+  title: string;
+  seniority_level: SeniorityLevel;
+  required_skills: string[];    // Hard requirements from the JD
+  preferred_skills: string[];   // Nice-to-haves
+  technologies: string[];       // Specific tech mentioned in the JD
+  domain: string;               // "fintech", "healthtech", "e-commerce", etc.
+  responsibilities: string[];   // Key responsibilities extracted
+  keywords: string[];           // ATS keywords to target in resume
+}
+
+/**
+ * Full result from the JD analysis pipeline.
+ * Includes the raw text, parsed output, and metadata.
+ */
+export interface JdAnalysisResult {
+  id: string;
+  rawText: string;
+  parsed: ParsedJobDescription;
+  createdAt: string;
+}

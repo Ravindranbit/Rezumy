@@ -15,8 +15,6 @@ import {
   AlertCircle,
   Search,
   X,
-  Zap,
-  Loader2,
 } from "lucide-react";
 import GitHubIcon from "@/components/ui/GitHubIcon";
 import { apiFetch } from "@/utils/api";
@@ -37,37 +35,7 @@ function GitHubPageContent() {
     disconnect,
     unlinkRepo,
     clearError: clearGitHubError,
-    analyzeRepo,
-    analyzeAll,
   } = useGitHub();
-
-  const [analyzingAll, setAnalyzingAll] = useState(false);
-
-  const handleAnalyzeAll = async () => {
-    setAnalyzingAll(true);
-    const { data, error } = await analyzeAll();
-    if (error) {
-      // Show the actual server error for better debugging
-      setStatusMessage({ type: "error", text: error });
-    } else {
-      const analyzed = (data as { analyzed?: number })?.analyzed ?? 0;
-      const errCount = ((data as { errors?: string[] })?.errors ?? []).length;
-      if (analyzed === 0 && errCount === 0) {
-        setStatusMessage({ type: "success", text: "All repositories already analyzed!" });
-      } else if (errCount > 0) {
-        setStatusMessage({
-          type: "success",
-          text: `Analyzed ${analyzed} repositories. ${errCount} could not be reached (private or empty repos).`,
-        });
-      } else {
-        setStatusMessage({
-          type: "success",
-          text: `✓ Deep-analyzed ${analyzed} repositories. Skills & tech stack updated!`,
-        });
-      }
-    }
-    setAnalyzingAll(false);
-  };
 
   const searchParams = useSearchParams();
   const [connecting, setConnecting] = useState(false);
@@ -295,20 +263,6 @@ function GitHubPageContent() {
           
           <div className="flex items-center gap-2">
             <button
-              onClick={handleAnalyzeAll}
-              disabled={analyzingAll}
-              className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#e43d5d] bg-[#e43d5d]/5 hover:bg-[#e43d5d]/10 border border-[#e43d5d]/10 px-4 py-2 rounded-lg transition-all disabled:opacity-50"
-              title="Deep-analyze all repos: scans package.json, README, and config files"
-            >
-              {analyzingAll ? (
-                <Loader2 size={11} className="animate-spin" />
-              ) : (
-                <Zap size={11} />
-              )}
-              {analyzingAll ? "Analyzing..." : "Analyze All"}
-            </button>
-            <div className="w-px h-4 bg-black/5" />
-            <button
               onClick={() => batchToggle(true)}
               disabled={importing}
               className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#e43d5d] hover:bg-[#e43d5d]/5 px-4 py-2 rounded-lg transition-all disabled:opacity-50"
@@ -338,7 +292,6 @@ function GitHubPageContent() {
               repo={repo}
               onToggle={toggleSelect}
               onUnlink={unlinkRepo}
-              onAnalyze={analyzeRepo}
             />
           ))}
         </div>

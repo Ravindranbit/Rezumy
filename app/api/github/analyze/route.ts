@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
         readmeSections: analysis.readmeSections as any,
         verifiedTechs: analysis.verifiedTechs as any,
         activityMetrics: analysis.activityMetrics as any,
-        // Only override description if the analysis generated a better one
-        ...(analysis.enhancedDescription && !repo.description
+        // Always upgrade to the enriched description from deep analysis
+        ...(analysis.enhancedDescription
           ? { description: analysis.enhancedDescription }
           : {}),
       },
